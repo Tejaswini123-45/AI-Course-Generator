@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic>=2,<3
+google-genai
+mcp[cli]>=1.28,<2
+PyMuPDF
+python-dotenv
+python-multipart
+pytest
+httpx

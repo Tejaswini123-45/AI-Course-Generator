@@ -40,7 +40,7 @@ def test_official_sdk_serializes_schema_and_parses_response(
     client_type = httpx.Client
 
     def respond(request: httpx.Request) -> httpx.Response:
-        assert request.url.path.endswith("/models/test-model:generateContent")
+        assert request.url.path == "/v1beta/models/test-model:generateContent"
         body = json.loads(request.content)
         assert body["generationConfig"]["responseMimeType"] == "application/json"
         assert body["generationConfig"]["responseJsonSchema"]["title"] == "Course"
@@ -87,6 +87,8 @@ def test_slide_update(sdk: MagicMock) -> None:
     ("failure", "expected"),
     [
         (errors.ClientError(429, {"message": "secret"}), gemini.QuotaError),
+        (errors.ServerError(503, {"status": "RESOURCE_EXHAUSTED"}), gemini.QuotaError),
+        (errors.ClientError(400, {"status": "INVALID_ARGUMENT"}), gemini.GenerationError),
         (errors.ClientError(403, {"message": "secret"}), gemini.GenerationError),
         (httpx.ConnectError("secret"), gemini.GenerationError),
     ],
@@ -106,3 +108,46 @@ def test_missing_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GEMINI_MODEL", "")
     with pytest.raises(ConfigurationError):
         gemini.generate_course("Lists", "beginner")
+
+
+def test_provider_unavailability_retries_successfully(
+    sdk: MagicMock, monkeypatch: pytest.MonkeyPatch, course_data: dict
+) -> None:
+    delay = MagicMock()
+    monkeypatch.setattr(gemini, "sleep", delay)
+    sdk.side_effect = [
+        errors.ServerError(503, {"status": "UNAVAILABLE"}),
+        SimpleNamespace(text=json.dumps(course_data)),
+    ]
+    assert gemini.generate_course("Lists", "beginner") == Course(**course_data)
+    assert sdk.call_count == 2
+    assert sdk.call_args_list[0] == sdk.call_args_list[1]
+    delay.assert_called_once_with(1)
+
+
+def test_provider_unavailability_stops_after_two_attempts(
+    sdk: MagicMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    delay = MagicMock()
+    monkeypatch.setattr(gemini, "sleep", delay)
+    sdk.side_effect = errors.ServerError(
+        503, {"status": "UNAVAILABLE", "message": "private upstream details"}
+    )
+    with pytest.raises(gemini.GenerationError, match="upstream HTTP 503") as caught:
+        gemini.generate_course("Lists", "beginner")
+    assert "private upstream details" not in str(caught.value)
+    assert sdk.call_count == 2
+    delay.assert_called_once_with(1)
+
+
+def test_malformed_output_after_503_does_not_trigger_third_attempt(
+    sdk: MagicMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(gemini, "sleep", MagicMock())
+    sdk.side_effect = [
+        errors.ServerError(503, {"status": "UNAVAILABLE"}),
+        SimpleNamespace(text="invalid JSON"),
+    ]
+    with pytest.raises(gemini.InvalidOutputError):
+        gemini.generate_course("Lists", "beginner")
+    assert sdk.call_count == 2

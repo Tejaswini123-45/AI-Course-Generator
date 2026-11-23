@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Callable
+from time import sleep
 
 import httpx
 from google import genai
@@ -54,6 +55,7 @@ def _generate[Result: BaseModel](
                 api_key=api_key,
                 vertexai=False,
                 http_options=types.HttpOptions(
+                    api_version="v1beta",
                     httpx_client=transport,
                     timeout=30_000,
                     retry_options=types.HttpRetryOptions(attempts=1),
@@ -61,9 +63,15 @@ def _generate[Result: BaseModel](
             ) as client,
         ):
             for attempt in range(2):
-                response = client.models.generate_content(
-                    model=model, contents=payload, config=config
-                )
+                try:
+                    response = client.models.generate_content(
+                        model=model, contents=payload, config=config
+                    )
+                except errors.APIError as exc:
+                    if attempt == 0 and exc.code == 503 and exc.status != "RESOURCE_EXHAUSTED":
+                        sleep(1)
+                        continue
+                    raise
                 try:
                     result = schema.model_validate_json(response.text or "")
                 except ValidationError:
@@ -78,12 +86,17 @@ def _generate[Result: BaseModel](
     except errors.APIError as exc:
         if exc.code == 429 or exc.status == "RESOURCE_EXHAUSTED":
             raise QuotaError("Gemini quota exceeded. Try again later.") from None
+        if exc.code == 503 or exc.status == "UNAVAILABLE":
+            raise GenerationError(
+                "Gemini is temporarily unavailable (upstream HTTP 503). "
+                "Try again shortly."
+            ) from None
         raise GenerationError(
             "Gemini rejected the request or is unavailable. Check the model and API key."
         ) from None
     except httpx.TransportError:
         raise GenerationError("Could not reach Gemini. Try again later.") from None
-    raise InvalidOutputError("Gemini returned invalid output twice.")
+    raise InvalidOutputError("Gemini returned invalid output within the two-attempt limit.")
 
 
 def generate_course(topic: Topic, audience: Audience) -> Course:

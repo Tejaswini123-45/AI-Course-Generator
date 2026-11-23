@@ -74,10 +74,12 @@ edit the local `.env` file. Process environment values take precedence.
 | Variable | Value |
 | --- | --- |
 | `GEMINI_API_KEY` | Your Gemini Developer API key |
-| `GEMINI_MODEL` | A model ID available on your project, for example `gemini-3.1-flash-lite` if available on your free tier |
+| `GEMINI_MODEL` | `gemini-2.5-flash` is the default in `.env.example` and the model used for live REST and MCP verification with the Gemini Developer API `v1beta` endpoint |
 
-Check [Gemini pricing and tier availability](https://ai.google.dev/gemini-api/docs/pricing)
-for your model. Keep `.env` local. Use non-sensitive material because
+Model availability and quotas can vary by project and tier and may change
+over time. Confirm that your project can use the model before the demo.
+See [Gemini pricing and tier availability](https://ai.google.dev/gemini-api/docs/pricing).
+Keep `.env` local. Use non-sensitive material because
 submitted text, including text extracted from PDFs, is sent to Gemini.
 
 ## REST API
@@ -174,8 +176,9 @@ for browsing and tests.
 
 The service sends a Pydantic-generated schema with the Gemini request, then
 validates the response locally. Local checks enforce rules that span fields,
-such as slide order and correct-answer membership. Malformed output gets
-one retry. Quota and transport errors surface immediately. Synchronous
+such as slide order and correct-answer membership. Malformed output and
+transient HTTP 503 responses share a two-attempt limit. A 503 retry waits
+one second. Quota and transport errors surface immediately. Synchronous
 provider calls run in worker threads so they do not block the interface’s
 event loop.
 

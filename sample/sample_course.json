@@ -1,0 +1,61 @@
+{
+  "title": "Working with Python Lists",
+  "description": "Build and update an ordered collection by managing a simple packing list in Python.",
+  "audience": "beginner",
+  "learning_objectives": [
+    "Create a Python list containing three items.",
+    "Use zero-based indexing to retrieve a specific item.",
+    "Use append and pop to add and remove an item at the end of a list."
+  ],
+  "slides": [
+    {
+      "slide_number": 1,
+      "title": "Create your packing list",
+      "content": "Write items = ['map', 'bottle', 'jacket']. Square brackets create a list, and commas separate its three items. Python preserves the order you wrote.",
+      "key_takeaway": "Use square brackets to create an ordered collection."
+    },
+    {
+      "slide_number": 2,
+      "title": "Retrieve one item by position",
+      "content": "Evaluate items[0] to retrieve 'map'. Python starts counting at zero, so items[2] retrieves the third item, 'jacket'.",
+      "key_takeaway": "The index of the first item is zero."
+    },
+    {
+      "slide_number": 3,
+      "title": "Add an item at the end",
+      "content": "Run items.append('snack'). The list now holds ['map', 'bottle', 'jacket', 'snack']. The three original items keep their positions.",
+      "key_takeaway": "append adds one item to the end of the existing list."
+    },
+    {
+      "slide_number": 4,
+      "title": "Remove and inspect the last item",
+      "content": "Run removed = items.pop(). The list returns to its original three items, and removed holds the string 'snack'.",
+      "key_takeaway": "pop() removes and returns the last item when no index is supplied."
+    }
+  ],
+  "quiz": [
+    {
+      "question": "Your packing list is ['map', 'bottle', 'jacket']. Which expression retrieves 'bottle'?",
+      "options": ["items[0]", "items[1]", "items[2]", "items[3]"],
+      "correct_answer": "items[1]",
+      "explanation": "The bottle is the second item, so its zero-based index is 1."
+    },
+    {
+      "question": "You append 'snack' to ['map', 'bottle', 'jacket']. What is now at index 2?",
+      "options": ["'map'", "'bottle'", "'jacket'", "'snack'"],
+      "correct_answer": "'jacket'",
+      "explanation": "Appending places the snack at the end. The jacket keeps its original index of 2."
+    },
+    {
+      "question": "Your list ends with 'snack'. Which line removes that item and saves it for later?",
+      "options": [
+        "removed = items[0]",
+        "removed = items.append('snack')",
+        "removed = items.pop()",
+        "removed = items"
+      ],
+      "correct_answer": "removed = items.pop()",
+      "explanation": "With no index, pop removes the final item and returns it. The assignment saves that returned value."
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
@@ -6,6 +8,12 @@ from app.schemas import Course
 
 def test_accepts_valid_course(course_data: dict) -> None:
     assert Course.model_validate(course_data).model_dump() == course_data
+
+
+def test_repository_sample_is_a_valid_course() -> None:
+    sample = Path(__file__).resolve().parents[1] / "sample" / "sample_course.json"
+    course = Course.model_validate_json(sample.read_bytes())
+    assert course.title == "Working with Python Lists"
 
 
 @pytest.mark.parametrize("field", ["learning_objectives", "slides", "quiz"])

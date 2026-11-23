@@ -33,6 +33,34 @@ def test_course_retries_invalid_output(sdk: MagicMock, course_data: dict) -> Non
     assert kwargs["config"].response_json_schema == Course.model_json_schema()
 
 
+def test_official_sdk_serializes_schema_and_parses_response(
+    monkeypatch: pytest.MonkeyPatch, course_data: dict
+) -> None:
+    monkeypatch.setattr(gemini, "gemini_settings", lambda: ("test-key", "test-model"))
+    client_type = httpx.Client
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith("/models/test-model:generateContent")
+        body = json.loads(request.content)
+        assert body["generationConfig"]["responseMimeType"] == "application/json"
+        assert body["generationConfig"]["responseJsonSchema"]["title"] == "Course"
+        assert json.loads(body["contents"][0]["parts"][0]["text"])["topic"] == "Lists"
+        return httpx.Response(
+            200,
+            json={
+                "candidates": [
+                    {"content": {"parts": [{"text": json.dumps(course_data)}]}}
+                ]
+            },
+        )
+
+    def mock_client(**kwargs: object) -> httpx.Client:
+        return client_type(transport=httpx.MockTransport(respond), **kwargs)
+
+    monkeypatch.setattr(gemini.httpx, "Client", mock_client)
+    assert gemini.generate_course("Lists", "beginner") == Course(**course_data)
+
+
 def test_retry_stops_after_two_attempts(sdk: MagicMock) -> None:
     sdk.return_value = SimpleNamespace(text=None)
     with pytest.raises(gemini.InvalidOutputError):

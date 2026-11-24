@@ -5,6 +5,20 @@ objectives, four slides, and three multiple-choice questions. The REST API
 serves web or script clients. A standalone MCP server lets MCP clients discover
 and call tools for creating courses, making quizzes, and revising slides.
 
+## MCP Inspector demo
+
+[Watch the project demo video on Google Drive](https://drive.google.com/file/d/1wya0yMcy_IIUHc1llIMVAvp4oINv58gn/view?usp=sharing).
+
+The `update_slide` tool takes the original slide content and an instruction
+to rewrite it with a shopping-cart example.
+
+![MCP Inspector showing the update_slide input and instruction](docs/mcp-inspector-input.png)
+
+The tool returns structured output with the revised title, content, and
+key takeaway.
+
+![MCP Inspector showing the successful update_slide result](docs/mcp-inspector-output.png)
+
 ## Architecture
 
 ```mermaid

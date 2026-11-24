@@ -189,17 +189,3 @@ Scanned documents require OCR before upload. Output can meet the schema and
 still need subject-matter review. Possible extensions include OCR, source
 citations, and evaluation against educator-reviewed examples.
 
-## Four-minute demo script
-
-1. **0:00–0:30** — Explain that REST and MCP are two interfaces around the
-   same Gemini service. Start FastAPI and show the health response.
-2. **0:30–1:30** — Open Swagger and submit the JSON example. Point out
-   the three learning objectives, four sequential slides, and three quiz
-   questions. Show the PDF upload option.
-3. **1:30–3:15** — Open Inspector, connect over stdio, and list the three
-   tools. Run the course, quiz, and slide examples. Compare the MCP course
-   output with the REST output and show the quiz question count.
-4. **3:15–4:00** — Show `app/services/gemini.py` and `app/schemas.py`.
-   Explain the local validation and one retry, then show the pytest result.
-   If Gemini quota interrupts the demo, show the actual error and use the
-   labeled example JSON to illustrate the output structure.
